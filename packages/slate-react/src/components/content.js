@@ -5,6 +5,7 @@ import getWindow from 'get-window'
 import warning from 'tiny-warning'
 import throttle from 'lodash/throttle'
 import { IS_FIREFOX, HAS_INPUT_EVENTS_LEVEL_2 } from 'slate-dev-environment'
+import { List } from 'react-virtualized'
 
 import EVENT_HANDLERS from '../constants/event-handlers'
 import Node from './node'
@@ -438,11 +439,16 @@ class Content extends React.Component {
     const decs = document.getDecorations(editor).concat(decorations)
     const childrenDecorations = getChildrenDecorations(document, decs)
 
-    const children = document.nodes.toArray().map((child, i) => {
-      const isSelected = !!indexes && indexes.start <= i && i < indexes.end
+    const rows = document.nodes.toArray()
 
-      return this.renderNode(child, isSelected, childrenDecorations[i])
-    })
+    const rowRenderer = ({ key, index, style }) => {
+      const isSelected = !!indexes && indexes.start <= index && index < indexes.end
+      return (
+        <div key={key} style={style}>
+          {this.renderNode(rows[index], isSelected, childrenDecorations[index])}
+        </div>
+      );
+    };
 
     const style = {
       // Prevent the default outline styles.
@@ -481,7 +487,13 @@ class Content extends React.Component {
         // so we have to disable it like this. (2017/04/24)
         data-gramm={false}
       >
-        {children}
+        <List
+          width={700}
+          height={500}
+          rowCount={rows.length}
+          rowHeight={50}
+          rowRenderer={rowRenderer}
+        />
       </Container>
     )
   }
